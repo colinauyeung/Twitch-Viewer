@@ -11,6 +11,10 @@
   "author": "",
   "license": "WTFPL",
   "devDependencies": {
-    "electron": "^18.0.4"
+    "electron": "^13.6.9"
+  },
+  "dependencies": {
+    "dotenv": "^16.0.1",
+    "tmi": "^2.0.0"
   }
 }
