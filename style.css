@@ -30,8 +30,8 @@ th, td {
     left: 1px;
     height: 720px;
     width: 1280px;
-    background-color: aqua;
-    opacity: 50%;
+    background-color: transparent;
+    opacity: 100%;
 }
 
 .circle{
@@ -51,3 +51,19 @@ th, td {
     left: 60px;
     position:absolute
 }
+
+.previewbox{
+    height: 200px;
+    width: 700px;
+    background-color: teal;
+  }
+  
+  .previewimg{
+    height: 200px;
+    width: 200px;
+    float:left;
+  }
+  
+  .previewtext{
+    padding: 10px 0px 10px 205px;
+  }

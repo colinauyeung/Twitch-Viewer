@@ -4,6 +4,39 @@ const tmi = require("tmi.js")
 const { initializeApp } = require('firebase/app');
 const { getDatabase, ref, onValue} = require("firebase/database");
 const { write } = require('original-fs');
+const linkPreviewGenerator = require("link-preview-generator");
+
+async function getlinkpreview(link){
+    let bits = link.split(":");
+    if(bits.length < 1){
+        return null;
+    }
+    if(bits[0] === "http" || bits[0] == "https"){
+        const previewData = await linkPreviewGenerator(link);
+        var box = document.createElement("div");
+        box.className = "previewbox";
+        var image = document.createElement("img");
+        image.src = previewData.img;
+        image.className = "previewimg";
+        var text = document.createElement("div");
+        text.className = "previewtext";
+        var title = document.createElement("h3");
+        title.className = "previewtitle";
+        title.innerHTML = previewData.title;
+        var description = document.createElement("p");
+        description.className = "previewdescription";
+        description.innerHTML = previewData.description;
+
+        text.appendChild(title);
+        text.appendChild(description);
+        box.appendChild(image);
+        box.appendChild(text);
+        return box;
+    }
+    return null;
+    
+
+}
 
 const firebaseConfig = {
 
@@ -21,6 +54,9 @@ const app = initializeApp(firebaseConfig);
 
 // Get a reference to the database service
 const db = getDatabase(app);
+
+var latency = 0;
+var latvals = []
 
 var options = {
 width: 1280,
@@ -45,11 +81,6 @@ const client = new tmi.Client({
     channels: ['daisuketestbot']
 });
 
-
-var interval = setInterval(()=>{
-    console.log(player.getPlaybackStats().hlsLatencyBroadcaster)
-}, 2000);
-
 client.connect();
 
 client.on('message', (channel, tags, message, self) => {
@@ -64,10 +95,10 @@ client.on('message', (channel, tags, message, self) => {
     //   windowManager.sharedData.set("chat502", {name:tags.username, message:message});
     //   flip = !flip
     // }
-    var timer = player.getPlaybackStats().hlsLatencyBroadcaster
-    var timeout = setTimeout(()=>{
-        console.log(message);
-    }, (timer+1)*1000);
+    // var timer = player.getPlaybackStats().hlsLatencyBroadcaster
+    // var timeout = setTimeout(()=>{
+    //     console.log(message);
+    // }, (timer+1)*1000);
     
     // let bits = message.split(" ");
     // if(bits.length > 1){
@@ -80,141 +111,101 @@ client.on('message', (channel, tags, message, self) => {
     //     windowManager.sharedData.set("chat502", {name:tags.username, message:bits[1]});
     //     }
     // }
+
+    let bits = message.split(" ");
+    if(bits.length > 1){
+      if(bits[0].toLowerCase() === '!a') {
+        let newValue = {name:tags.username, message:bits[1]};
+        console.log(newValue)
+        //broken, need to function async
+        var timestamp = Date.now();
+        // eval(`console.log('${newValue.message}')`)
+        eval(`getlinkpreview('${newValue.message}')`
+        + ".then(function(preview){"
+        +   "if(preview != null){"
+        +       `let diff = Date.now() - ${timestamp};`
+        +       "setTimeout(()=>{"
+        +           "let text = document.getElementById(\"text887\");"
+        +           "text.insertBefore(preview, text.firstChild);"
+        +           "if(text.childNodes.length > 5){"
+        +               "text.removeChild(text.lastChild);"
+        +           "}"
+        +       `}, ((${latency}+0.75)*1000)-diff)}});`)
+            // +    "}}});")
+        // getlinkpreview(newValue.message)
+        // .then(function(preview){
+        //     if(preview != null){
+        //         let diff = Date.now() - timestamp;
+        //         setTimeout(() =>{
+        //             let text = document.getElementById("text887");
+        //             text.appendChild(preview);
+        //             if(text.childNodes.length > 5){
+        //                 text.removeChild(text.firstChild);
+        //             }
+        //         }, ((latency+0.75)*1000)-diff)
+        //     }
+        // });
+  
+        // client.say(channel, `@${tags.username}, Yo what's up`);
+  
+      }
+      if(bits[0].toLowerCase() === "!b"){
+        windowManager.sharedData.set("chat502", {name:tags.username, message:bits[1]});
+      }
+    }
 });
 
+function setTranslate(xPos, yPos, el) {
+    el.style.transform = "translate3d(" + xPos + "px, " + yPos + "px, 0)";
+}
 
 
 
 
-/*
-  if (runtest) {
-    log('run test');
-    player.addEventListener(Twitch.Embed.VIDEO_READY, function() {
-      log('Attempt volumne and unmute');
-      player.setVolume(0.1);
-      player.setMuted(false);
-    });
-  }
-*/
-
-  // function log(txt, other) {
-  //   var sp = document.createElement('div');
-  //   sp.textContent = new Date().getTime() + ': ' + txt;
-
-  //   var t = other ? 'logb' : 'log';
-  //   document.getElementById(t).prepend(sp);
-  // }
-
-  // player.addEventListener(Twitch.Embed.VIDEO_READY, function() {
-  //   log('The video is ready');
-  // })
-  // player.addEventListener(Twitch.Embed.VIDEO_PLAY, function() {
-  //   log('The video is playing');
-  // })
-
-  // document.getElementById('play').addEventListener('click', (e) => {
-  //   log('Attempt Play');
-  //   player.play();
-  // });
-  // document.getElementById('pause').addEventListener('click', (e) => {
-  //   log('Attempt Pause');
-  //   player.pause();
-  // });
-  // document.getElementById('volume').addEventListener('click', (e) => {
-  //   log('Attempt Volume: ' + document.getElementById('volume_value').value);
-  //   var val = parseFloat(document.getElementById('volume_value').value);
-  //   player.setVolume(val);
-  // });
-  // document.getElementById('volume_get').addEventListener('click', (e) => {
-  //   log('Attempt Get Volume');
-  //   log('Volume ' + player.getVolume());
-  // });
-
-  // document.getElementById('mute').addEventListener('click', (e) => {
-  //   log('Attempt Mute');
-  //   player.setMuted(true);
-  // });
-  // document.getElementById('unmute').addEventListener('click', (e) => {
-  //   log('Attempt UnMute');
-  //   player.setMuted(false);
-  // });
-  // document.getElementById('muted').addEventListener('click', (e) => {
-  //   log('Attempt Get muted');
-  //   log(player.getMuted());
-  // });
-
-  // setInterval(() => {
-  //   var status = '';
-
-  //   if (player.isPaused()) {
-  //     status += 'Paused ';
-  //   } else {
-  //     status += 'Playing ';
-  //   }
-
-  //   if (player.getMuted()) {
-  //     status += 'Muted ';
-  //   } else {
-  //     status += 'UnMuted ';
-  //   }
-  //   status += 'Vol: ' + player.getVolume();
-
-  //   status += ' ' + player.getQuality();
-
-  //   document.getElementById('status').textContent = status;
-  // }, 250);
-
-  // document.getElementById('change').addEventListener('click', (e) => {
-  //   var channel = document.getElementById('channel').value;
-  //   log('Change channel ' + channel);
-  //   player.setChannel(channel);
-  // });
-
-  // document.getElementById('quality_get').addEventListener('click', (e) => {
-  //   log('Fetch Quality');
-  //   console.log(player.getPlaybackStats());
-  // });
-  // document.getElementById('qualities_get').addEventListener('click', (e) => {
-  //   log('Fetch Qualities');
-
-  //   var target = document.getElementById('quality');
-  //   target.textContent = '';
-
-  //   var qol = player.getQualities()
-  //   for (var x=0;x<qol.length;x++) {
-  //     var opt = document.createElement('option');
-  //     opt.value = qol[x].group;
-  //     opt.textContent = qol[x].name;
-  //     target.append(opt);
-  //   }
-  // });
-  // document.getElementById('quality_change').addEventListener('click', (e) => {
-  //   var target = document.getElementById('quality').value;
-  //   log('Set quality to ' + target);
-  //   player.setQuality(target);
-  // });
-
-  // var events = [
-  //   Twitch.Player.ENDED,
-  //   Twitch.Player.PAUSE,
-  //   Twitch.Player.PLAY,
-  //   Twitch.Player.PLAYBACK_BLOCKED,
-  //   Twitch.Player.PLAYING,
-  //   Twitch.Player.OFFLINE,
-  //   Twitch.Player.ONLINE,
-  //   Twitch.Player.READY
-  // ]
-  // for (var x=0;x<events.length;x++) {
-  //   quickBind(events[x]);
-  // }
-  // function quickBind(evt) {
-  //   player.addEventListener(evt, (e) => {
-  //     log('Captured ' + evt, true);
-  //   });
-  // }
+var inter = setInterval(()=>{
+    var time = player.getPlaybackStats().hlsLatencyBroadcaster
+    if(time === 0){
+        return;
+    }
+    latvals.push(time);
+    if(latvals.length > 30){
+        latvals.shift();
+    }
+    let avg = 0;
+    latvals.forEach((value, index)=>{
+        avg = avg + value;
+    })
+    avg = avg/latvals.length;
+    latency = avg;
+    // console.log(avg);
+}, 500)
 
 const cup502db = ref(db, 'position/cup502');
 onValue(cup502db, (snapshot) => {
   const data = snapshot.val();
-  console.log(data);
+  var ball = document.getElementById("cup502");
+  let x = data.x - 25;
+  let y = data.y - 25;
+  console.log(data)
+  var timer = player.getPlaybackStats().hlsLatencyBroadcaster
+  var timeout = setTimeout(()=>{
+    setTranslate(x, y, ball);
+  }, (latency+0.75)*1000);
+  
+//   console.log(data);
+});
+
+const cup887db = ref(db, 'position/cup887');
+onValue(cup887db, (snapshot) => {
+  const data = snapshot.val();
+  var ball2 = document.getElementById("cup887");
+  let x = data.x - 25;
+  let y = data.y - 25 - (50*1);
+  console.log(data)
+  var timer = player.getPlaybackStats().hlsLatencyBroadcaster
+  var timeout = setTimeout(()=>{
+    setTranslate(x, y, ball2);
+  }, (latency+0.75)*1000);
+  
+//   console.log(data);
 });
